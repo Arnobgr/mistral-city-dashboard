@@ -344,5 +344,32 @@ async def test_run_dashboard_agent_max_iterations(mock_mcp_client, mock_mcp_tool
         
         assert "Agent failed to complete after 2 iterations" in str(exc_info.value)
 
+@pytest.mark.asyncio
+async def test_dashboard_caching(mock_mcp_client, mock_mistral_client, mock_mcp_tools):
+    """Test that dashboard results are cached properly."""
+    mock_mcp_client.list_tools = AsyncMock(return_value=mock_mcp_tools)
+    
+    with patch('agent.Mistral', return_value=mock_mistral_client):
+        agent = DashboardAgent(
+            mcp_client=mock_mcp_client,
+            mistral_api_key=MOCK_MISTRAL_API_KEY,
+            model="mistral-large-latest"
+        )
+        agent._cache_ttl = 3600  # Set cache TTL for testing
+        agent._max_cache_size = 100  # Set max cache size for testing
+        
+        # Initialize tools before running agent
+        await agent.initialize_tools()
+        
+        # First call - should execute normally
+        result1, iterations1 = await agent.run_dashboard_agent(MOCK_CITY)
+        assert iterations1 > 0  # Should have actual iterations
+        
+        # Second call - should be cached
+        result2, iterations2 = await agent.run_dashboard_agent(MOCK_CITY)
+        assert iterations2 == 0  # Should be cached (0 iterations)
+        assert result1.city == result2.city
+        assert result1.summary == result2.summary
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

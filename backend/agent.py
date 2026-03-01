@@ -8,6 +8,7 @@ import json
 import re
 import time
 import asyncio
+from functools import lru_cache
 from mistralai import Mistral
 from pydantic import ValidationError
 
@@ -21,6 +22,11 @@ class DashboardAgent:
         self.client = Mistral(api_key=mistral_api_key)
         self.max_iterations = int(os.getenv("MAX_AGENT_ITERATIONS", "15"))
         self._cached_mistral_tools: Optional[List[Dict[str, Any]]] = None
+        
+        # In-memory caching
+        self._dashboard_cache: Dict[str, Tuple[DashboardData, float, float]] = {}  # city -> (data, timestamp, ttl)
+        self._cache_ttl = int(os.getenv("CACHE_TTL_SECONDS", "3600"))  # 1 hour default
+        self._max_cache_size = int(os.getenv("MAX_CACHE_SIZE", "100"))  # max cached cities
 
     async def initialize_tools(self) -> None:
         """Fetch and cache MCP tool definitions at startup."""
@@ -28,8 +34,9 @@ class DashboardAgent:
         self._cached_mistral_tools = await self._convert_mcp_tools_to_mistral_format()
         log.info("Cached %d tools for Mistral", len(self._cached_mistral_tools))
 
+    @lru_cache(maxsize=1)
     async def _convert_mcp_tools_to_mistral_format(self) -> List[Dict[str, Any]]:
-        """Convert MCP tools to Mistral function calling format."""
+        """Convert MCP tools to Mistral function calling format. Cached to avoid repeated conversions."""
         mcp_tools = await self.mcp_client.list_tools()
         mistral_tools = []
         
@@ -78,6 +85,24 @@ class DashboardAgent:
         result = await self.mcp_client.call_tool(tool_name, arguments)
         log.info("MCP tool %s returned %d chars", tool_name, len(result))
         return result
+
+    def _clean_cache(self) -> None:
+        """Clean up expired cache entries and enforce size limits."""
+        current_time = time.time()
+        expired_cities = []
+        
+        # Remove expired entries
+        for city, (data, timestamp, ttl) in self._dashboard_cache.items():
+            if current_time - timestamp > ttl:
+                expired_cities.append(city)
+        
+        for city in expired_cities:
+            self._dashboard_cache.pop(city, None)
+        
+        # Enforce size limit (FIFO eviction)
+        if len(self._dashboard_cache) > self._max_cache_size:
+            oldest_city = min(self._dashboard_cache.keys(), key=lambda k: self._dashboard_cache[k][1])
+            self._dashboard_cache.pop(oldest_city, None)
 
     async def _parse_dashboard_response(self, response_text: str) -> DashboardData:
         """Parse the JSON response from Mistral into DashboardData."""
@@ -133,6 +158,13 @@ class DashboardAgent:
         Run the full agentic loop for a given city name.
         Returns a tuple of (DashboardData, iterations).
         """
+        # Check cache first
+        self._clean_cache()
+        if city in self._dashboard_cache:
+            cached_data, timestamp, ttl = self._dashboard_cache[city]
+            log.info("Cache hit for city: %s", city)
+            return (cached_data, 0)  # 0 iterations for cached results
+
         start_time = time.time()
         iterations = 0
 
@@ -239,6 +271,11 @@ class DashboardAgent:
                     dashboard_data = await self._parse_dashboard_response(assistant_message.content)
                     duration_seconds = time.time() - start_time
                     log.info("Agent completed in %d iterations (%.2fs)", iterations, duration_seconds)
+                    
+                    # Cache the result
+                    self._dashboard_cache[city] = (dashboard_data, time.time(), self._cache_ttl)
+                    self._clean_cache()  # Clean up after adding new entry
+                    
                     return (dashboard_data, iterations)
                 except ValueError as e:
                     # If parsing fails, continue the conversation
