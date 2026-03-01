@@ -4,7 +4,14 @@
 
 *Any French city. Real government data. Instant insights.*
 
-![Ma Ville en Chiffres Screenshot](https://via.placeholder.com/800x450/003189/F8F8F8?text=Ma+Ville+en+Chiffres+Dashboard)
+![Ma Ville en Chiffres Screenshot](assets/screenshot.png)
+
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-green.svg)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18%2B-61DAFB.svg)](https://reactjs.org/)
+[![Docker](https://img.shields.io/badge/Docker-24%2B-2496ED.svg)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Mistral AI](https://img.shields.io/badge/Powered%20by-Mistral%20AI-purple.svg)](https://mistral.ai/)
 
 ## 📋 Overview
 
