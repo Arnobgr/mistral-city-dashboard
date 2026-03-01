@@ -216,7 +216,7 @@ python -m pytest -v
 ## 📚 Data Sources
 
 ### Primary Data Provider
-**data.gouv.fr MCP Server**
+**data.gouv.fr MCP Server** ([GitHub](https://github.com/datagouv/datagouv-mcp), MIT License)
 - **Endpoint:** `https://mcp.data.gouv.fr/mcp`
 - **Protocol:** JSON-RPC 2.0
 - **Tools Used:**
