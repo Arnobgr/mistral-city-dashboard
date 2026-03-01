@@ -1,9 +1,12 @@
 import asyncio
 import logging
+import pytest
 from mcp_client import MCPClient
 
 logging.basicConfig(level=logging.DEBUG)
 
+
+@pytest.mark.skip(reason="Manual MCP integration script - run with: python test_mcp.py")
 async def test():
     client = MCPClient("https://mcp.data.gouv.fr/mcp")
     try:
@@ -22,4 +25,6 @@ async def test():
     
     await client.close()
 
-asyncio.run(test())
+
+if __name__ == "__main__":
+    asyncio.run(test())

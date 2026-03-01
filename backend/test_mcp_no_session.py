@@ -2,6 +2,7 @@ import asyncio
 import logging
 import httpx
 import json
+import pytest
 
 MCP_HEADERS = {
     "Content-Type": "application/json",
@@ -10,6 +11,8 @@ MCP_HEADERS = {
 
 logging.basicConfig(level=logging.DEBUG)
 
+
+@pytest.mark.skip(reason="Manual MCP integration script - run with: python test_mcp_no_session.py")
 async def test():
     async with httpx.AsyncClient(timeout=30.0, headers=MCP_HEADERS) as client:
         async def call(q):
@@ -28,4 +31,6 @@ async def test():
             call("démographie Lyon")
         )
 
-asyncio.run(test())
+
+if __name__ == "__main__":
+    asyncio.run(test())
