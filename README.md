@@ -270,6 +270,35 @@ docker compose up --build -d
 
 This project is open-source and available under the MIT License. See [LICENSE](LICENSE) for details.
 
+## 🙏 Credits
+
+This project uses the following open-source libraries and APIs. All are properly credited in accordance with their respective licenses.
+
+### APIs & Data Providers
+- **[Mistral AI](https://mistral.ai/)** — AI model and function calling ([Terms of Service](https://mistral.ai/terms/))
+- **[data.gouv.fr MCP Server](https://github.com/datagouv/datagouv-mcp)** — French government data access (MIT License)
+- **[ElevenLabs](https://elevenlabs.io/)** — Text-to-speech for city summaries ([Terms of Service](https://elevenlabs.io/terms))
+
+### Backend
+- **[FastAPI](https://fastapi.tiangolo.com/)** — Web framework (MIT)
+- **[Uvicorn](https://www.uvicorn.org/)** — ASGI server (BSD-3-Clause)
+- **[Mistral AI Python SDK](https://github.com/mistralai/client-python)** — Mistral API client (Apache 2.0)
+- **[HTTPX](https://www.python-httpx.org/)** — Async HTTP client (BSD-3-Clause)
+- **[Pydantic](https://docs.pydantic.dev/)** — Data validation (MIT)
+- **[slowapi](https://github.com/laurentS/slowapi)** — Rate limiting (MIT)
+- **[python-dotenv](https://github.com/theskumar/python-dotenv)** — Environment configuration (BSD-3-Clause)
+
+### Frontend
+- **[React](https://react.dev/)** — UI framework (MIT)
+- **[Vite](https://vite.dev/)** — Build tool (MIT)
+- **[Recharts](https://recharts.org/)** — Charts and visualizations (MIT)
+- **[Tailwind CSS](https://tailwindcss.com/)** — Styling (MIT)
+- **[Radix UI](https://www.radix-ui.com/)** — Accessible UI primitives (MIT)
+- **[Lucide React](https://lucide.dev/)** — Icons (ISC)
+- **[Remix Icon](https://remixicon.com/)** — Additional icons (Apache 2.0)
+
+Mistral AI, ElevenLabs, and data.gouv.fr APIs are used in accordance with their respective terms of service.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please follow these guidelines:
@@ -314,4 +343,4 @@ Potential improvements for future versions:
 
 © 2026 Mistral City Dashboard
 
-*Built with ❤️ during the Mistral AI 2026 Hackathon*
+*Built with ❤️ during the Mistral AI 2026 Hackathon (March 2026).*
