@@ -47,3 +47,9 @@ def test_dashboard_validation():
 def test_dashboard_missing_city():
     response = client.post("/api/dashboard", json={})
     assert response.status_code == 422
+
+
+def test_dashboard_city_too_long():
+    """City input exceeds max length (DoS prevention)."""
+    response = client.post("/api/dashboard", json={"city": "A" * 201})
+    assert response.status_code == 422

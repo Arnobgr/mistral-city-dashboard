@@ -225,6 +225,40 @@ async def test_parse_dashboard_response_invalid():
     
     assert "Failed to parse dashboard response" in str(exc_info.value)
 
+
+@pytest.mark.asyncio
+async def test_parse_dashboard_response_rejects_malicious_source_url():
+    """Agent rejects LLM response with javascript: URL (XSS prevention)."""
+    mock_mcp_client = MagicMock()
+    mock_mcp_client.list_tools = AsyncMock(return_value=[])
+
+    agent = DashboardAgent(
+        mcp_client=mock_mcp_client,
+        mistral_api_key=MOCK_MISTRAL_API_KEY
+    )
+
+    malicious_json = json.dumps({
+        "city": "Paris",
+        "summary": "Test",
+        "metrics": [
+            {
+                "id": "x",
+                "title": "X",
+                "type": "kpi",
+                "unit": "",
+                "source_dataset": "",
+                "source_url": "javascript:alert(1)",
+                "value": 1,
+            }
+        ]
+    })
+
+    with pytest.raises(ValueError) as exc_info:
+        await agent._parse_dashboard_response(malicious_json)
+
+    assert "Failed to parse dashboard response" in str(exc_info.value)
+
+
 @pytest.mark.asyncio
 async def test_run_dashboard_agent_success(mock_mcp_client, mock_mistral_client, mock_mcp_tools):
     """Test successful agent execution."""

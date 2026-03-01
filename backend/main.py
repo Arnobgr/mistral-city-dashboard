@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, Response
 import logging
@@ -7,6 +7,9 @@ import sys
 from pathlib import Path
 import httpx
 from dotenv import load_dotenv
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 
 class FlushingStreamHandler(logging.StreamHandler):
@@ -38,6 +41,11 @@ except ImportError:
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 app = FastAPI()
+
+# Rate limiting
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS configuration
 app.add_middleware(
@@ -72,29 +80,30 @@ async def startup_event():
     log.info("MCP tools initialized")
 
 @app.post("/api/dashboard")
-async def get_dashboard(request: DashboardRequest):
+@limiter.limit(os.getenv("RATE_LIMIT_DASHBOARD", "20/minute"))
+async def get_dashboard(request: Request, body: DashboardRequest):
     start_time = time.time()
-    log.info("Dashboard request received for city: %s", request.city)
+    log.info("Dashboard request received for city: %s", body.city)
 
     try:
         # Run the agentic loop
-        dashboard_data, iterations = await agent.run_dashboard_agent(request.city)
+        dashboard_data, iterations = await agent.run_dashboard_agent(body.city)
         duration_seconds = time.time() - start_time
 
-        log.info("Dashboard completed for %s in %.2fs (%d iterations)", request.city, duration_seconds, iterations)
+        log.info("Dashboard completed for %s in %.2fs (%d iterations)", body.city, duration_seconds, iterations)
         return DashboardResponse(
             data=dashboard_data,
             duration_seconds=duration_seconds,
             iterations=iterations
         )
     except RuntimeError as e:
-        log.warning("Dashboard failed for %s: %s", request.city, e)
+        log.warning("Dashboard failed for %s: %s", body.city, e)
         if "failed to complete after" in str(e).lower():
             raise HTTPException(status_code=504, detail=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
     except SDKError as e:
         err_msg = str(e)
-        log.warning("Mistral SDK error for %s: %s", request.city, err_msg)
+        log.warning("Mistral SDK error for %s: %s", body.city, err_msg)
         if "401" in err_msg or "Unauthorized" in err_msg:
             raise HTTPException(
                 status_code=401,
@@ -102,8 +111,8 @@ async def get_dashboard(request: DashboardRequest):
             )
         raise HTTPException(status_code=502, detail=f"Mistral API error: {err_msg}")
     except Exception as e:
-        log.exception("Unexpected error for %s", request.city)
-        raise HTTPException(status_code=500, detail=str(e))
+        log.exception("Unexpected error for %s", body.city)
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 @app.get("/api/health")
 async def health_check():
@@ -116,7 +125,8 @@ ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
 
 
 @app.post("/api/tts")
-async def text_to_speech(body: TTSRequest):
+@limiter.limit(os.getenv("RATE_LIMIT_TTS", "30/minute"))
+async def text_to_speech(request: Request, body: TTSRequest):
     """Convert text to speech using ElevenLabs API."""
     if not ELEVENLABS_API_KEY:
         raise HTTPException(status_code=501, detail="TTS not configured")
