@@ -18,6 +18,7 @@ def mock_mcp_client():
     client.list_tools = AsyncMock()
     client.call_tool = AsyncMock()
     client.close = AsyncMock()
+    client.base_url = MOCK_MCP_BASE_URL  # Add base_url attribute
     return client
 
 @pytest.fixture
@@ -74,27 +75,30 @@ def mock_mcp_tools():
             "name": "search_datasets",
             "description": "Search for datasets",
             "parameters": {
-                "query": {
-                    "type": "string",
-                    "description": "Search query",
-                    "required": True
-                }
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search query"
+                    }
+                },
+                "required": ["query"]
             }
         },
         {
             "name": "query_resource_data",
             "description": "Query data from a resource",
             "parameters": {
-                "resource_id": {
-                    "type": "string",
-                    "description": "Resource ID",
-                    "required": True
+                "properties": {
+                    "resource_id": {
+                        "type": "string",
+                        "description": "Resource ID"
+                    },
+                    "question": {
+                        "type": "string",
+                        "description": "Question to answer"
+                    }
                 },
-                "question": {
-                    "type": "string",
-                    "description": "Question to answer",
-                    "required": True
-                }
+                "required": ["resource_id", "question"]
             }
         }
     ]
@@ -110,7 +114,7 @@ def test_agent_initialization(mock_mcp_client):
     assert agent.mcp_client == mock_mcp_client
     assert agent.mistral_api_key == MOCK_MISTRAL_API_KEY
     assert agent.model == "mistral-large-latest"
-    assert agent.max_iterations == 10
+    assert agent.max_iterations == 15  # Updated to match new default
 
 def test_convert_mcp_tools_to_mistral_format(mock_mcp_client, mock_mcp_tools):
     """Test MCP to Mistral tools conversion."""
@@ -233,7 +237,10 @@ async def test_run_dashboard_agent_success(mock_mcp_client, mock_mistral_client,
             model="mistral-large-latest"
         )
         
-        result = await agent.run_dashboard_agent(MOCK_CITY)
+        # Initialize tools before running agent
+        await agent.initialize_tools()
+        
+        result, iterations = await agent.run_dashboard_agent(MOCK_CITY)
         
         assert isinstance(result, DashboardData)
         assert result.city == MOCK_CITY
@@ -285,14 +292,18 @@ async def test_run_dashboard_agent_with_tool_calls(mock_mcp_client, mock_mcp_too
         mock_response_final
     ]
     
-    with patch('agent.Mistral', return_value=mock_mistral_client):
+    with patch('agent.Mistral', return_value=mock_mistral_client), \
+         patch('agent.MCPClient', return_value=mock_mcp_client):
         agent = DashboardAgent(
             mcp_client=mock_mcp_client,
             mistral_api_key=MOCK_MISTRAL_API_KEY,
             model="mistral-large-latest"
         )
         
-        result = await agent.run_dashboard_agent(MOCK_CITY)
+        # Initialize tools before running agent
+        await agent.initialize_tools()
+        
+        result, iterations = await agent.run_dashboard_agent(MOCK_CITY)
         
         assert isinstance(result, DashboardData)
         assert result.city == MOCK_CITY
@@ -324,6 +335,9 @@ async def test_run_dashboard_agent_max_iterations(mock_mcp_client, mock_mcp_tool
             model="mistral-large-latest"
         )
         agent.max_iterations = 2  # Set low for testing
+        
+        # Initialize tools before running agent
+        await agent.initialize_tools()
         
         with pytest.raises(RuntimeError) as exc_info:
             await agent.run_dashboard_agent(MOCK_CITY)

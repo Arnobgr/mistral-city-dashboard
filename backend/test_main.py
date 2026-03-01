@@ -30,7 +30,7 @@ def test_dashboard_endpoint():
     )
     
     with patch('main.agent.run_dashboard_agent', new_callable=AsyncMock) as mock_agent:
-        mock_agent.return_value = mock_dashboard_data
+        mock_agent.return_value = (mock_dashboard_data, 1)  # Return tuple (data, iterations)
         
         response = client.post("/api/dashboard", json={"city": "Lyon"})
         assert response.status_code == 200
