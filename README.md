@@ -15,8 +15,11 @@ Ma Ville en Chiffres is a civic data dashboard that lets users explore French ci
 - ✅ AI-powered data discovery and analysis
 - ✅ Interactive visualizations (KPIs, line charts, bar charts)
 - ✅ Source attribution with direct links to datasets
+- ✅ Text-to-speech audio summaries via ElevenLabs
+- ✅ Brutalist French civic design aesthetic
 - ✅ Responsive design for desktop and tablet
 - ✅ Docker-based deployment for easy setup
+- ✅ Production-grade security (rate limiting, input validation)
 
 ## 🚀 Quick Start
 
@@ -108,6 +111,14 @@ MISTRAL_MODEL=mistral-large-latest
 MAX_AGENT_ITERATIONS=15
 CACHE_TTL_SECONDS=300
 MAX_CACHE_SIZE=50
+
+# ElevenLabs TTS (optional)
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+ELEVENLABS_VOICE_ID=21m00Tcm4TlvDq8ikWAM  # French female voice
+
+# Security / Rate Limiting
+RATE_LIMIT_DASHBOARD=20/minute
+RATE_LIMIT_TTS=30/minute
 ```
 
 ### Development Configuration
@@ -117,11 +128,11 @@ For frontend development, the Vite proxy automatically forwards `/api` requests 
 ## 📦 Technology Stack
 
 ### Frontend
-- **Framework:** React 19 + TypeScript
-- **Build Tool:** Vite 7
-- **UI Library:** Recharts (charts), Radix UI (primitives)
-- **Styling:** CSS Modules
-- **Linting:** ESLint 9 + TypeScript ESLint
+- **Framework:** React + TypeScript
+- **Build Tool:** Vite
+- **UI Library:** Recharts (charts)
+- **Styling:** Tailwind CSS + Brutalist design
+- **Linting:** ESLint + TypeScript ESLint
 
 ### Backend
 - **Framework:** FastAPI
@@ -130,6 +141,8 @@ For frontend development, the Vite proxy automatically forwards `/api` requests 
 - **HTTP Client:** HTTPX (async)
 - **Data Validation:** Pydantic v2
 - **Caching:** In-memory LRU cache
+- **Rate Limiting:** slowapi
+- **TTS:** ElevenLabs API
 
 ### Infrastructure
 - **Containerization:** Docker + Docker Compose
@@ -146,10 +159,18 @@ The application uses Mistral's function calling to:
 4. Structure results into a coherent dashboard
 
 ### Real-Time Visualizations
-- **KPI Cards:** Key metrics with deltas
-- **Line Charts:** Historical trends
+- **KPI Cards:** Key metrics with deltas and source links
+- **Line Charts:** Historical trends with tooltips
 - **Bar Charts:** Comparisons and distributions
 - **Responsive Grid:** Adapts to screen size
+- **Audio Playback:** ElevenLabs TTS for city summaries
+
+### Security Features
+- **Rate Limiting:** 20 requests/minute for dashboard, 30/minute for TTS
+- **Input Validation:** Max length enforcement (city: 200 chars, TTS: 5000 chars)
+- **HTTPS Enforcement:** All source URLs must be HTTPS (XSS prevention)
+- **Error Handling:** Generic error messages to prevent information leakage
+- **Validation Tests:** Comprehensive test coverage for security constraints
 
 ### Performance Optimization
 - **In-Memory Caching:** Dashboard results cached for 5 minutes
@@ -165,6 +186,8 @@ Try these French cities:
 - `Dijon` - Medium-sized city example
 - `Paris` - Capital city comprehensive data
 
+**TTS Feature:** Click "Écouter le résumé" button on any dashboard to hear the city summary read aloud in French via ElevenLabs.
+
 ## 🧪 Testing
 
 ### Running Tests
@@ -179,6 +202,9 @@ python -m pytest -v
 - ✅ Error handling scenarios
 - ✅ Cache functionality
 - ✅ API endpoint validation
+- ✅ Security validations (input length, URL validation)
+- ✅ Rate limiting behavior
+- ✅ TTS endpoint functionality
 
 ## 📚 Data Sources
 
@@ -287,6 +313,8 @@ Potential improvements for future versions:
 - **Data export** (CSV, PDF, images)
 - **Bookmarking** favorite cities
 - **Historical comparisons** between multiple cities
+- **Custom TTS voices** and playback controls
+- **Security dashboard** with rate limit monitoring
 
 ---
 
