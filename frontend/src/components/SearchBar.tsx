@@ -12,42 +12,44 @@ export function SearchBar({ onSearch, loading, error }: { onSearch: (city: strin
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit} className="flex gap-2">
+    <div className="max-w-3xl mx-auto">
+      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-6">
         <input
           type="text"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          placeholder="Entrez une ville, commune ou département..."
-          className="flex-1 px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-french-blue focus:border-transparent text-lg"
+          placeholder="ENTREZ UNE VILLE OU UN DÉPARTEMENT..."
+          className="flex-1 px-6 py-5 border-4 border-ink-black bg-white text-ink-black focus:outline-none focus:bg-french-white transition-colors text-xl font-mono uppercase placeholder-gray-400"
           disabled={loading}
         />
         <button
           type="submit"
           disabled={loading || !city.trim()}
-          className={`px-6 py-3 bg-french-blue text-white rounded-lg shadow-sm hover:bg-[#002570] focus:outline-none focus:ring-2 focus:ring-french-blue focus:ring-offset-2 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`px-10 py-5 bg-french-blue text-white border-4 border-ink-black font-display text-3xl tracking-widest uppercase transition-all shadow-brutal hover:shadow-brutal-hover hover:-translate-y-1 active:translate-y-1 active:shadow-none ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
         >
           {loading ? (
-            <span className="flex items-center gap-2">
-              <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-              Chargement...
+            <span className="flex items-center gap-3">
+              <span className="animate-spin rounded-full h-5 w-5 border-b-4 border-white"></span>
+              RECHERCHE...
             </span>
           ) : (
             <span className="flex items-center gap-2">
-              <RiSearchLine className="w-5 h-5" />
-              Analyser
+              <RiSearchLine className="w-6 h-6" />
+              ANALYSER
             </span>
           )}
         </button>
       </form>
-      <p className="mt-4 text-sm text-gray-600 text-center">
-        Exemple : Paris, Lyon, Marseille, Seine-Saint-Denis
-      </p>
-      {error && (
-        <p className="mt-2 text-sm text-french-red" role="alert">
-          {error}
+      <div className="mt-8 pt-4 border-t-2 border-ink-black/20 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p className="text-lg font-body text-gray-600 italic">
+          Exemples : Paris, Lyon, Marseille, Dijon
         </p>
-      )}
+        {error && (
+          <p className="text-lg font-body text-french-red font-bold" role="alert">
+            Erreur: {error}
+          </p>
+        )}
+      </div>
     </div>
   )
 }

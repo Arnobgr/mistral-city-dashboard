@@ -6,13 +6,11 @@ import { DashboardData, DashboardResponse } from './types'
 import { fetchDashboard } from './api'
 
 function App() {
-  const [city, setCity] = useState<string>('')
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleSearch = async (cityName: string) => {
-    setCity(cityName)
     setLoading(true)
     setError(null)
     
@@ -33,20 +31,31 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-french-white">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-center mb-8 text-french-blue">
-          Ma Ville en Chiffres
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+      {/* Magazine-style Top Border */}
+      <div className="w-full h-2 bg-french-blue"></div>
+      <div className="w-full h-1 bg-french-red mt-1"></div>
+
+      <header className="pt-6 pb-6 border-b-4 border-ink-black mx-4 md:mx-12 lg:mx-24 mb-8">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-display text-center text-ink-black uppercase tracking-wide leading-none">
+          Ma Ville <span className="text-french-blue">en Chiffres</span>
         </h1>
-        
+        <p className="text-center mt-4 text-lg md:text-xl font-body italic text-gray-700 max-w-2xl mx-auto">
+          Données civiques officielles, analysées et structurées en temps réel par intelligence artificielle.
+        </p>
+      </header>
+
+      <main className="flex-grow container mx-auto px-4 md:px-12 lg:px-24 pb-20">
         {dashboardData ? (
           <Dashboard data={dashboardData} onBack={handleBack} />
         ) : (
-          <SearchBar onSearch={handleSearch} loading={loading} error={error} />
+          <div className="mt-8 md:mt-24">
+            <SearchBar onSearch={handleSearch} loading={loading} error={error} />
+          </div>
         )}
-        
-        {loading && <LoadingOverlay />}
-      </div>
+      </main>
+      
+      {loading && <LoadingOverlay />}
     </div>
   )
 }

@@ -4,10 +4,10 @@ import { RiDatabaseLine, RiSearchLine, RiBarChartLine, RiDashboardLine } from '@
 export function LoadingOverlay() {
   const [messageIndex, setMessageIndex] = useState(0)
   const messages = [
-    { text: "Recherche des jeux de données...", icon: <RiDatabaseLine className="w-8 h-8 text-white" /> },
-    { text: "Interrogation de data.gouv.fr...", icon: <RiSearchLine className="w-8 h-8 text-white" /> },
-    { text: "Analyse des données...", icon: <RiBarChartLine className="w-8 h-8 text-white" /> },
-    { text: "Assemblage du tableau de bord...", icon: <RiDashboardLine className="w-8 h-8 text-white" /> },
+    { text: "RECHERCHE DES JEUX DE DONNÉES...", icon: <RiDatabaseLine className="w-12 h-12 text-french-white" /> },
+    { text: "INTERROGATION DE DATA.GOUV.FR...", icon: <RiSearchLine className="w-12 h-12 text-french-white" /> },
+    { text: "ANALYSE PAR L'IA EN COURS...", icon: <RiBarChartLine className="w-12 h-12 text-french-white" /> },
+    { text: "ASSEMBLAGE DU TABLEAU DE BORD...", icon: <RiDashboardLine className="w-12 h-12 text-french-white" /> },
   ]
 
   useEffect(() => {
@@ -18,19 +18,31 @@ export function LoadingOverlay() {
   }, [messages.length])
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
-      <div className="p-8 rounded-xl max-w-sm w-full text-center">
-        <div className="mb-6">
-          <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-ink-black/95 backdrop-blur-sm p-4">
+      <div className="border-4 border-french-white p-8 md:p-16 max-w-4xl w-full text-center relative bg-ink-black shadow-[16px_16px_0px_0px_rgba(248,248,248,1)]">
+        <div className="absolute top-0 left-0 w-full h-3 flex">
+          <div className="h-full w-1/3 bg-french-blue animate-pulse"></div>
+          <div className="h-full w-1/3 bg-french-white animate-pulse delay-75"></div>
+          <div className="h-full w-1/3 bg-french-red animate-pulse delay-150"></div>
         </div>
-        <div className="flex items-center justify-center gap-3">
-          {messages[messageIndex].icon}
-          <span className="text-lg font-medium text-white">
-            {messages[messageIndex].text}
-          </span>
+        
+        <h2 className="text-6xl md:text-8xl font-display uppercase tracking-widest text-french-white mb-12 mt-6">
+          ANALYSE EN COURS
+        </h2>
+
+        <div className="flex flex-col items-center justify-center gap-8">
+          <div className="p-6 border-4 border-french-white bg-ink-black animate-bounce shadow-[8px_8px_0px_0px_rgba(248,248,248,1)]">
+            {messages[messageIndex].icon}
+          </div>
+          <div className="h-16 flex items-center justify-center overflow-hidden">
+            <span className="text-2xl md:text-4xl font-mono uppercase tracking-wider text-french-white transition-opacity duration-300">
+              {messages[messageIndex].text}
+            </span>
+          </div>
         </div>
-        <p className="mt-4 text-sm text-white/90">
-          Cela peut prendre quelques secondes...
+
+        <p className="mt-12 text-xl font-body italic text-gray-400 border-t-2 border-dashed border-gray-700 pt-6">
+          Veuillez patienter pendant que notre agent explore les données publiques.
         </p>
       </div>
     </div>

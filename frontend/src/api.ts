@@ -12,7 +12,7 @@ export async function fetchDashboard(city: string): Promise<DashboardResponse> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ city }),
     });
-  } catch (err) {
+  } catch {
     throw new Error(
       "Impossible de joindre le serveur. Vérifiez que le backend tourne sur http://localhost:8000"
     );
