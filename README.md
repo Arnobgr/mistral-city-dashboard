@@ -280,20 +280,7 @@ Contributions are welcome! Please follow these guidelines:
 4. **Push to branch:** `git push origin feature/your-feature`
 5. **Open a Pull Request**
 
-### Development Setup
-```bash
-# Backend
-git clone https://github.com/Arnobgr/mistral-city-dashboard.git
-cd mistral-city-dashboard/backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
 
-# Frontend
-cd ../frontend
-npm install
-npm run dev
-```
 
 ## 🏆 Hackathon Information
 
@@ -320,7 +307,7 @@ Potential improvements for future versions:
 - **Data export** (CSV, PDF, images)
 - **Bookmarking** favorite cities
 - **Historical comparisons** between multiple cities
-- **Custom TTS voices** and playback controls
+
 - **Security dashboard** with rate limit monitoring
 
 ---
