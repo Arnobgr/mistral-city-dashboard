@@ -1,0 +1,30 @@
+# Virtual environment
+backend/venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environment files
+.env
+
+# IDE-specific files
+.idea/
+.vscode/
+
+# Logs and databases
+*.log
+*.db
+
+# Test cache
+.pytest_cache/
+
+# MacOS metadata
+.DS_Store
+
+# Node modules (if any)
+node_modules/
+
+# Frontend build artifacts
+frontend/dist/
+frontend/node_modules/
