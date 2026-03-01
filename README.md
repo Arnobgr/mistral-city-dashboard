@@ -312,6 +312,6 @@ Potential improvements for future versions:
 
 ---
 
-© 2026 Mistral City Dashboard. All rights reserved.
+© 2026 Mistral City Dashboard
 
 *Built with ❤️ during the Mistral AI 2026 Hackathon*
