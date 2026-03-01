@@ -31,3 +31,14 @@ export async function fetchDashboard(city: string): Promise<DashboardResponse> {
   }
   return res.json();
 }
+
+export async function fetchTTS(text: string): Promise<Blob> {
+  const url = BASE_URL ? `${BASE_URL}/api/tts` : "/api/tts";
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) throw new Error("TTS unavailable");
+  return res.blob();
+}

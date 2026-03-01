@@ -33,7 +33,11 @@ class DashboardData(BaseModel):
     metrics: list[Metric]
 
 class DashboardRequest(BaseModel):
-    city: str = Field(..., min_length=1)
+    city: str
+
+
+class TTSRequest(BaseModel):
+    text: str = Field(..., min_length=1)
 
 class DashboardResponse(BaseModel):
     data: DashboardData

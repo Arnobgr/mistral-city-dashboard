@@ -1,8 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse, Response
 import logging
 import os
 import sys
+import httpx
 from dotenv import load_dotenv
 
 
@@ -23,7 +25,7 @@ logging.basicConfig(
 log = logging.getLogger("main")
 from agent import DashboardAgent
 from mcp_client import MCPClient
-from models import DashboardData, DashboardRequest, DashboardResponse
+from models import DashboardData, DashboardRequest, DashboardResponse, TTSRequest
 import time
 
 try:
@@ -32,7 +34,7 @@ except ImportError:
     SDKError = Exception  # fallback if SDK structure changes
 
 # Load environment variables
-load_dotenv()
+load_dotenv('/Users/arnobeauger/Desktop/PROJECTS/mistral-city-dashboard/.env')
 
 app = FastAPI()
 
@@ -105,6 +107,42 @@ async def get_dashboard(request: DashboardRequest):
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
+
+
+# ElevenLabs TTS Configuration
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+
+
+@app.post("/api/tts")
+async def text_to_speech(body: TTSRequest):
+    """Convert text to speech using ElevenLabs API."""
+    if not ELEVENLABS_API_KEY:
+        raise HTTPException(status_code=501, detail="TTS not configured")
+
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
+    headers = {
+        "xi-api-key": ELEVENLABS_API_KEY, 
+        "Content-Type": "application/json",
+        "Accept": "audio/mpeg"
+    }
+    payload = {
+        "text": body.text,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}
+    }
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.post(url, json=payload, headers=headers)
+        if response.status_code != 200:
+            try:
+                error_data = response.json()
+                error_message = error_data.get("detail", {}).get("message", "ElevenLabs API error")
+                raise HTTPException(status_code=response.status_code, detail=error_message)
+            except:
+                raise HTTPException(status_code=response.status_code, detail="ElevenLabs API error")
+        
+        return Response(content=response.content, media_type="audio/mpeg")
 
 @app.on_event("shutdown")
 async def shutdown_event():

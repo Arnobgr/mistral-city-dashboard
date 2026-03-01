@@ -3,6 +3,7 @@ import { KPICard } from './KPICard'
 import { LineChartWidget } from './LineChartWidget'
 import { BarChartWidget } from './BarChartWidget'
 import { RiArrowLeftLine, RiVolumeUpLine } from '@remixicon/react'
+import { fetchTTS } from '../api'
 
 export function Dashboard({ data, onBack }: { data: DashboardData; onBack: () => void }) {
   const renderMetric = (metric: Metric) => {
@@ -36,10 +37,20 @@ export function Dashboard({ data, onBack }: { data: DashboardData; onBack: () =>
           </div>
           <button
             className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
-            onClick={() => {
-              const utterance = new SpeechSynthesisUtterance(data.summary)
-              utterance.lang = 'fr-FR'
-              speechSynthesis.speak(utterance)
+            onClick={async () => {
+              try {
+                const blob = await fetchTTS(data.summary)
+                const url = URL.createObjectURL(blob)
+                const audio = new Audio(url)
+                audio.play()
+                audio.onended = () => URL.revokeObjectURL(url)
+              } catch (error) {
+                console.error("TTS error:", error)
+                // Fallback to browser TTS if ElevenLabs fails
+                const utterance = new SpeechSynthesisUtterance(data.summary)
+                utterance.lang = 'fr-FR'
+                speechSynthesis.speak(utterance)
+              }
             }}
           >
             <RiVolumeUpLine className="w-5 h-5" />
