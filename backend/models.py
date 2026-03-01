@@ -33,7 +33,7 @@ class DashboardData(BaseModel):
     metrics: list[Metric]
 
 class DashboardRequest(BaseModel):
-    city: str
+    city: str = Field(..., min_length=1)
 
 class DashboardResponse(BaseModel):
     data: DashboardData
