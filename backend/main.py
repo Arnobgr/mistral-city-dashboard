@@ -4,6 +4,7 @@ from fastapi.responses import StreamingResponse, Response
 import logging
 import os
 import sys
+from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
@@ -33,8 +34,8 @@ try:
 except ImportError:
     SDKError = Exception  # fallback if SDK structure changes
 
-# Load environment variables
-load_dotenv('/Users/arnobeauger/Desktop/PROJECTS/mistral-city-dashboard/.env')
+# Load environment variables from project root
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 app = FastAPI()
 

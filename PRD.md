@@ -546,7 +546,7 @@ To rebuild after code changes: `docker compose up --build`
 cd backend
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp ../.env.example .env  # fill in MISTRAL_API_KEY
+cp ../.env.example ../.env  # .env lives at project root; fill in MISTRAL_API_KEY
 uvicorn main:app --reload --port 8000
 ```
 
