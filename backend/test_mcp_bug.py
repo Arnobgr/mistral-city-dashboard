@@ -9,10 +9,7 @@ logging.basicConfig(level=logging.DEBUG)
 @pytest.mark.skip(reason="Manual MCP integration script - run with: python test_mcp_bug.py")
 async def test():
     client = MCPClient("https://mcp.data.gouv.fr/mcp")
-    
-    # Establish session first
-    await client._ensure_session()
-    
+
     async def execute_one(q):
         try:
             print(f"Calling {q}")

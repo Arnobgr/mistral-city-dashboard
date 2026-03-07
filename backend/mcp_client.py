@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 import json
 import logging
@@ -8,6 +9,19 @@ MCP_HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json, text/event-stream",
 }
+
+# Retry configuration for transient upstream errors (502, 503, 504, timeouts)
+MCP_MAX_RETRIES = 3
+MCP_RETRY_BACKOFF_BASE = 1.0  # seconds
+
+
+def _is_retryable(exc: BaseException) -> bool:
+    """Return True if the exception indicates a transient error worth retrying."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code in (502, 503, 504)
+    if isinstance(exc, (httpx.ConnectError, httpx.ReadTimeout, httpx.ConnectTimeout)):
+        return True
+    return False
 
 
 def _parse_sse_json(response_text: str) -> dict:
@@ -21,45 +35,37 @@ def _parse_sse_json(response_text: str) -> dict:
 
 
 class MCPClient:
+    """MCP client for data.gouv.fr. Uses stateless Streamable HTTP - no session required."""
+
     def __init__(self, base_url: str):
         self.base_url = base_url
         self.client = httpx.AsyncClient(timeout=30.0, headers=MCP_HEADERS)
-        self._session_id: str | None = None
 
-    async def _ensure_session(self) -> None:
-        """Establish MCP session via initialize handshake if not already done."""
-        if self._session_id is not None:
-            return
-
-        log.info("Establishing MCP session...")
-        payload = {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "initialize",
-            "params": {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {},
-                "clientInfo": {"name": "civic-dashboard", "version": "1.0"},
-            },
-        }
-        response = await self.client.post(self.base_url, json=payload)
-        response.raise_for_status()
-
-        session_id = response.headers.get("mcp-session-id")
-        if not session_id:
-            raise RuntimeError("MCP server did not return mcp-session-id")
-        self._session_id = session_id.strip()
-        log.info("MCP session established")
-
-    def _session_headers(self) -> dict:
-        if not self._session_id:
-            raise RuntimeError("MCP session not initialized")
-        return {"mcp-session-id": self._session_id}
+    async def _post_with_retry(self, payload: dict) -> httpx.Response:
+        """POST to MCP endpoint with retry on transient errors (502, 503, 504, timeouts)."""
+        last_exc = None
+        for attempt in range(MCP_MAX_RETRIES):
+            try:
+                response = await self.client.post(self.base_url, json=payload)
+                response.raise_for_status()
+                return response
+            except Exception as e:
+                last_exc = e
+                if not _is_retryable(e) or attempt == MCP_MAX_RETRIES - 1:
+                    raise
+                delay = MCP_RETRY_BACKOFF_BASE * (2**attempt)
+                log.warning(
+                    "MCP call failed (attempt %d/%d): %s. Retrying in %.1fs...",
+                    attempt + 1,
+                    MCP_MAX_RETRIES,
+                    e,
+                    delay,
+                )
+                await asyncio.sleep(delay)
+        raise last_exc
 
     async def call_tool(self, tool_name: str, arguments: dict) -> str:
         """Call an MCP tool and return the text content as a string."""
-        await self._ensure_session()
-
         log.debug("Calling MCP tool %s", tool_name)
         payload = {
             "jsonrpc": "2.0",
@@ -68,10 +74,7 @@ class MCPClient:
             "params": {"name": tool_name, "arguments": arguments},
         }
 
-        response = await self.client.post(
-            self.base_url, json=payload, headers=self._session_headers()
-        )
-        response.raise_for_status()
+        response = await self._post_with_retry(payload)
 
         result = _parse_sse_json(response.text)
         if "result" in result and "content" in result["result"]:
@@ -82,8 +85,6 @@ class MCPClient:
 
     async def list_tools(self) -> list[dict]:
         """Fetch available tools from the MCP server."""
-        await self._ensure_session()
-
         log.info("Listing MCP tools...")
         payload = {
             "jsonrpc": "2.0",
@@ -92,10 +93,7 @@ class MCPClient:
             "params": {},
         }
 
-        response = await self.client.post(
-            self.base_url, json=payload, headers=self._session_headers()
-        )
-        response.raise_for_status()
+        response = await self._post_with_retry(payload)
 
         result = _parse_sse_json(response.text)
         if "result" in result and "tools" in result["result"]:
