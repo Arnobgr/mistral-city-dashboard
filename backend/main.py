@@ -33,9 +33,12 @@ from models import DashboardData, DashboardRequest, DashboardResponse, TTSReques
 import time
 
 try:
-    from mistralai.models.sdkerror import SDKError
+    from mistralai.client.errors import SDKError  # mistralai >= 2.0
 except ImportError:
-    SDKError = Exception  # fallback if SDK structure changes
+    try:
+        from mistralai.models.sdkerror import SDKError  # mistralai 1.x
+    except ImportError:
+        SDKError = Exception  # fallback if SDK structure changes
 
 # Load environment variables from project root
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")

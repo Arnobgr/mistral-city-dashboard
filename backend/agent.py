@@ -9,10 +9,38 @@ import re
 import time
 import asyncio
 from functools import lru_cache
-from mistralai import Mistral
+try:
+    from mistralai.client import Mistral  # mistralai >= 2.0
+except ImportError:
+    from mistralai import Mistral  # mistralai 1.x
 from pydantic import ValidationError
 
 log = logging.getLogger("agent")
+
+
+def _message_content_as_str(content: Any) -> str:
+    """mistralai 1.x returns str; 2.x may return str or list of content chunks (e.g. TextChunk)."""
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: List[str] = []
+        for chunk in content:
+            if isinstance(chunk, str):
+                parts.append(chunk)
+            elif isinstance(chunk, dict):
+                if chunk.get("type") == "text" and "text" in chunk:
+                    parts.append(str(chunk["text"]))
+                elif "text" in chunk:
+                    parts.append(str(chunk["text"]))
+            elif hasattr(chunk, "text"):
+                t = getattr(chunk, "text", None)
+                if t is not None:
+                    parts.append(str(t))
+        return "".join(parts)
+    return str(content)
+
 
 class DashboardAgent:
     def __init__(self, mcp_client: MCPClient, mistral_api_key: str, model: str = "mistral-large-latest"):
@@ -219,8 +247,12 @@ class DashboardAgent:
             messages.append(assistant_message)
 
             has_tools = hasattr(assistant_message, "tool_calls") and assistant_message.tool_calls
-            has_content = bool(assistant_message.content)
-            log.info("Mistral response: %s", "tool_calls" if has_tools else ("content (%d chars)" % len(assistant_message.content or "")))
+            content_text = _message_content_as_str(assistant_message.content)
+            has_content = bool(content_text.strip())
+            log.info(
+                "Mistral response: %s",
+                "tool_calls" if has_tools else ("content (%d chars)" % len(content_text)),
+            )
 
             # Check if we have tool calls to execute
             if hasattr(assistant_message, 'tool_calls') and assistant_message.tool_calls:
@@ -265,10 +297,10 @@ class DashboardAgent:
                 continue
             
             # If no tool calls, check if we have a final response
-            if assistant_message.content:
+            if content_text.strip():
                 try:
                     # Try to parse as JSON response
-                    dashboard_data = await self._parse_dashboard_response(assistant_message.content)
+                    dashboard_data = await self._parse_dashboard_response(content_text)
                     duration_seconds = time.time() - start_time
                     log.info("Agent completed in %d iterations (%.2fs)", iterations, duration_seconds)
                     
